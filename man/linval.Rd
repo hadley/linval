@@ -3,7 +3,7 @@
 \title{Breaks up the data into groups according to the user specified type and
 then plots using the geoms found in the ggplot2 package.}
 \usage{
-linval(formula, data, reduction = NULL, breaks = NULL, bins = NULL)
+linval(formula, data, reduction = NULL, ...)
 }
 \arguments{
   \item{formula}{formula should be expressed as the model

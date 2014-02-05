@@ -35,34 +35,27 @@
 #'
 #' data_gridded <- linval(formula = price ~ carat + color + clarity,
 #'   data = diamonds, reduction="grid")
-linval <- function(formula, data, reduction=NULL, breaks=NULL, bins=NULL){
+linval <- function(formula, data, reduction = NULL, ...){
+  # Fit the model
+  model <- lm(formula, data, model = FALSE)
 
-  ## this makes sure that the plot type that is input into the program is an option in the first place.
-  reduction <- match.arg(reduction,
-    c("breaks", "extremes", "nothing", "grid"))
+  # Generate reduced set for predictions
+  if (is.character(reduction)) {
+    fname <- paste0("reduce_", reduction)
+    reduction <- match.fun(reduction)
+  }
+  stopifnot(is.function(reduction))
 
-  ## This converts the formula from the equation that describes the model to actually fitting it.
-  model <- lm(formula, data)
-
-  # Since the datagrid will be used to predict the value for the response
-  # variable, it is not included mainly for organization purposes
   xs <- all.vars(terms(formula)[[3]])
-  yy <- all.vars(terms(formula)[[2]])
-  data <- data[, xs]
+  in_model <- data[xs]
 
-  ## Perform the grid interpolation
-  interpolator <- match.fun(paste('reduce', reduction, sep = '_'))
-  interp <- interpolator(data = data, breaks = breaks, bins = bins)
+  grid <- as.data.frame(reduction(in_model, ...))
 
-  pred <- predict(model, interp$datagrid, se = TRUE)[c("fit", "se.fit")]
+  y <- all.vars(terms(formula)[[2]])
+  pred <- predict(model, newdata = grid, se = TRUE)[c("fit", "se.fit")]
+  names(pred) <- paste0(y, c("", ".se"))
 
-  interp$datagrid <- cbind(interp$datagrid, pred)
-  interp$factorgrid <- cbind(interp$factorgrid, pred)
-  interp$plotgrid<-cast(interp$factorgrid, formula = formula(paste(paste(xs, sep=' ', collapse ='+'), '~ .')), mean, value = 'fit')
-  names(interp$plotgrid)<- c(xs,'fit')
-  interp$formula <- formula
-
-  structure(interp, class = "linval")
+  structure(list(grid = grid, model = model), class = "linval")
 }
 
 #' Plots a previously created linval object
