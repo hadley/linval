@@ -1,4 +1,4 @@
-# Produce a data frame co
+#' Produce a data frame containing a grid.
 #' @examples
 #' str(reduce_grid(diamonds[1:3], bins = 4))
 #' str(reduce_grid(diamonds[1:3], bins = 2ci))
@@ -13,9 +13,9 @@ reduce_grid <- function(data, bins = 5, breaks = list()) {
   )
 }
 
-#' Function to estimate the number of rows that the reduce function will create
-#' You'd use this to warn the user if they're going to create something that's 
-#' way too big.
+# Function to estimate the number of rows that the reduce function will create
+# You'd use this to warn the user if they're going to create something that's
+# way too big.
 reduce_grid_n <- function(data, ...) {
   lengths <- sapply(default_breaks(data, ...), "length")
   prod(lengths)
@@ -30,8 +30,8 @@ default_breaks <- function(data, bins = 5, breaks = list()) {
   for(var in missing_breaks) {
     breaks[[var]] <- var_breaks(data[[var]], bins)
   }
-  
-  breaks  
+
+  breaks
 }
 
 #' Determins if the variable is of factor type and if not,
