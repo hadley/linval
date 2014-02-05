@@ -1,0 +1,13 @@
+Package: linval
+Version: 0.1
+Date: 2009-4-29
+Title: linval Package
+Author: Christopher Kielion <ckielion@gmail.com> with contributions
+    from Dr. Di Cook, Dr. Heike Hofmann, Dr. Hadley Wickham, and Barret
+    Schloerke.
+Depends: ggplot2
+Maintainer: Christopher Kielion <ckielion@gmail.com>
+Description: Breaks up data into groups according to user specified
+    type and then plots using the geoms found in the ggplot2 package.
+Collate: 'asisfunction.r' 'breaksandpercents.r' 'breaktranslation.r'
+    'highlowval.r' 'linval.r'
