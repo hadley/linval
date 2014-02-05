@@ -1,0 +1,8 @@
+S3method(plot,linval)
+export(default_breaks)
+export(linval)
+export(reduce_breaks)
+export(reduce_extremes)
+export(reduce_grid)
+export(reduce_nothing)
+export(var_breaks)

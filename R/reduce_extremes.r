@@ -1,27 +1,28 @@
-#' Subset the dataframe by collecting records that have either the maximum 
+#' Subset the dataframe by collecting records that have either the maximum
 #' or minimum for any variable
-#' In an effort to lower the number of plots that need to be created by the 
-#' LinVal package when using a highly complex data source, the records that 
-#' contain either the maximum or minimum value for any of the variables are 
+#' In an effort to lower the number of plots that need to be created by the
+#' LinVal package when using a highly complex data source, the records that
+#' contain either the maximum or minimum value for any of the variables are
 #' collected for plotting.
 #'
-#' @param datagrid dataframe from which to determine maximums/minimums and 
+#' @param datagrid dataframe from which to determine maximums/minimums and
 #' collect records that contain these values
 #' @author Christopher Kielion \email{ckielion@@gmail.com}
+#' @export
 #' @examples
 #' selected_data <- diamonds[,c('carat','cut','depth','table')]
 #'
-#' print(str(selected_data)) 
+#' print(str(selected_data))
 #' # Notice that the data types of the variables are as they appear
 #' # in the source dataframe
 #'
 #' output <- reduce_extremes(selected_data)
-#' print(output$factorgrid) 
+#' print(output$factorgrid)
 #' # Notice that the observations have been subset to only include those
-#' # that contain a maximum or minimum value for any numeric varible in 
+#' # that contain a maximum or minimum value for any numeric varible in
 #' # the frame.
-#'                                
-#' print(str(output$datagrid))   
+#'
+#' print(str(output$datagrid))
 #' # This shows that the output contains the dataframe in its original
 #' # form as well so that predicted values can be made and appended to the
 #' # factorgrid produced.
