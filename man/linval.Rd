@@ -3,27 +3,21 @@
 \title{Breaks up the data into groups according to the user specified type and
 then plots using the geoms found in the ggplot2 package.}
 \usage{
-linval(formula, data, reduction = NULL, ...)
+linval(formula, data, reduction, ...)
 }
 \arguments{
   \item{formula}{formula should be expressed as the model
   of interest in the form y ~ x1 + x2 + ...}
 
-  \item{data}{data is the name of the dataframe where the
-  variables in the formula are found.}
+  \item{data}{input data}
 
-  \item{reduction}{reduction describes how the data should
-  be broken up to make plotting and visualization easier.}
+  \item{reduction}{Either a string or a function. If a
+  string, looks for function called \code{paste("reduce_",
+  reduction)}. Used to reduce the size of the data to make
+  visualisation easier.}
 
-  \item{breaks}{breaks is set only if the "breakslg"
-  reduction is chosen. These are the user specified breaks
-  and should be set for ALL x variables in the hierarchy.}
-
-  \item{bins}{bins is set only if user would like to use
-  the default equally sized bins or if they would like the
-  breaks of numeric variables determined by percentiles.
-  It's value divides the values into percentiles equal to
-  1/bins. Default=5.}
+  \item{...}{Other parameters passed on to reduction
+  function.}
 }
 \description{
 Breaks up the data into groups according to the user
@@ -31,26 +25,21 @@ specified type and then plots using the geoms found in the
 ggplot2 package.
 }
 \examples{
-data(diamonds)
+# By quantile
+d_quantiles <- linval(price ~ carat + color + clarity, data = diamonds,
+  reduction = "qgrid", bins = 4)
 
-breaks_by_quantile_data <- linval(
-  formula = price ~ carat + color + clarity, data = diamonds,
-  reduction="breaks", bins=4)
+d_evenly_spaced <- linval(formula = price ~ carat + color + clarity,
+  data = diamonds, reduction = "egrid")
 
-hi_and_low_vals <- linval(
-  formula = price ~ depth + table + carat + color + clarity,
-  data = diamonds, reduction="extremes")
+d_extremes <- linval(price ~ depth + table + carat + color + clarity,
+  data = diamonds, reduction = "extremes")
 
-breaks_by_user_specs <- linval(formula = price ~ carat + color + clarity,
-  data = diamonds, reduction="breaks", breaks=list(carat=c(0.4, 0.8, 3.0)))
+d_user_breaks <- linval(price ~ carat + color + clarity,
+  data = diamonds, reduction = "egrid",
+  breaks = list(carat = c(0.4, 0.8, 3.0)))
 
-data_factorized_asis <- linval(formula = price ~ carat + color + clarity,
-  data = diamonds, reduction="nothing")
-
-data_gridded <- linval(formula = price ~ carat + color + clarity,
-  data = diamonds, reduction="grid")
-}
-\author{
-Christopher Kielion \email{ckielion@gmail.com}
+d_as_is <- linval(price ~ carat + color + clarity,
+  data = diamonds, reduction = "nothing")
 }
 

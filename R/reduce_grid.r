@@ -3,7 +3,7 @@
 #' \code{reduce_egrid} makes a grid with equal width bins, \code{reduce_qgrid}
 #' makes a grid with bins containing equal numbers of points,
 #' \code{reduce_extremes} captures just the minimum and maximum of each
-#' variable.
+#' variable. Categorical variables are always preserved.
 #'
 #' @param data input data
 #' @param bin number of bins for each variable
@@ -23,6 +23,7 @@ reduce_egrid <- function(data, bins = 5, breaks = list(), n_max = 1e5) {
 #' @rdname reduce_egrid
 #' @export
 reduce_qgrid <- function(data, bins = 5, breaks = list(), n_max = 1e5) {
+  probs <- seq(0, 1, length = bins)
   build_grid(data, function(x) quantile(x, probs), breaks, n_max)
 }
 

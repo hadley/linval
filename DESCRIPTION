@@ -1,6 +1,6 @@
 Package: linval
 Version: 0.1
-Title: linval Package
+Title: Explore linear models with grids of predictors.
 Maintainer: Christopher Kielion <ckielion@gmail.com>
 Author: Christopher Kielion <ckielion@gmail.com> with contributions
     from Dr. Di Cook, Dr. Heike Hofmann, Dr. Hadley Wickham, and Barret

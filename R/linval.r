@@ -2,112 +2,127 @@
 #' then plots using the geoms found in the ggplot2 package.
 #'
 #' @param formula formula should be expressed as the model of interest in the
-#' form y ~ x1 + x2 + ...
-#' @param data data is the name of the dataframe where the variables in the
-#' formula are found.
-#' @param reduction reduction describes how the data should be broken up to
-#' make plotting and visualization easier.
-#' @param breaks breaks is set only if the "breakslg" reduction is chosen.
-#' These are the user specified breaks and should be set for ALL x variables
-#' in the hierarchy.
-#' @param bins bins is set only if user would like to use the default equally
-#' sized bins or if they would like the breaks of numeric variables
-#' determined by percentiles. It's value divides the values into percentiles
-#' equal to 1/bins. Default=5.
-#' @author Christopher Kielion \email{ckielion@@gmail.com}
+#'   form y ~ x1 + x2 + ...
+#' @param data input data
+#' @param reduction Either a string or a function. If a string, looks for
+#'    function called \code{paste("reduce_", reduction)}. Used to reduce
+#'    the size of the data to make visualisation easier.
+#' @param ... Other parameters passed on to reduction function.
 #' @export
 #' @examples
-#' data(diamonds)
+#' # By quantile
+#' d_quantiles <- linval(price ~ carat + color + clarity, data = diamonds,
+#'   reduction = "qgrid", bins = 4)
 #'
-#' breaks_by_quantile_data <- linval(
-#'   formula = price ~ carat + color + clarity, data = diamonds,
-#'   reduction="breaks", bins=4)
+#' d_evenly_spaced <- linval(formula = price ~ carat + color + clarity,
+#'   data = diamonds, reduction = "egrid")
 #'
-#' hi_and_low_vals <- linval(
-#'   formula = price ~ depth + table + carat + color + clarity,
-#'   data = diamonds, reduction="extremes")
+#' d_extremes <- linval(price ~ depth + table + carat + color + clarity,
+#'   data = diamonds, reduction = "extremes")
 #'
-#' breaks_by_user_specs <- linval(formula = price ~ carat + color + clarity,
-#'   data = diamonds, reduction="breaks", breaks=list(carat=c(0.4, 0.8, 3.0)))
+#' d_user_breaks <- linval(price ~ carat + color + clarity,
+#'   data = diamonds, reduction = "egrid",
+#'   breaks = list(carat = c(0.4, 0.8, 3.0)))
 #'
-#' data_factorized_asis <- linval(formula = price ~ carat + color + clarity,
-#'   data = diamonds, reduction="nothing")
-#'
-#' data_gridded <- linval(formula = price ~ carat + color + clarity,
-#'   data = diamonds, reduction="grid")
-linval <- function(formula, data, reduction = NULL, ...){
+#' d_as_is <- linval(price ~ carat + color + clarity,
+#'   data = diamonds, reduction = "nothing")
+linval <- function(formula, data, reduction, ...){
   # Fit the model
   model <- lm(formula, data, model = FALSE)
 
-  # Generate reduced set for predictions
-  if (is.character(reduction)) {
-    fname <- paste0("reduce_", reduction)
-    reduction <- match.fun(reduction)
-  }
-  stopifnot(is.function(reduction))
-
+  # Extract predictors from original data
   xs <- all.vars(terms(formula)[[3]])
   in_model <- data[xs]
+
+  # Generate reduced grid for predictions
+  if (is.character(reduction)) {
+    fname <- paste0("reduce_", reduction)
+    reduction <- match.fun(fname)
+  }
+  stopifnot(is.function(reduction))
 
   grid <- as.data.frame(reduction(in_model, ...))
 
   y <- all.vars(terms(formula)[[2]])
-  pred <- predict(model, newdata = grid, se = TRUE)[c("fit", "se.fit")]
-  names(pred) <- paste0(y, c("", ".se"))
+  pred <- predict(model, newdata = grid, se = TRUE)
+  pred_df <- data.frame(pred[c("fit", "se.fit")])
+  names(pred_df) <- paste0(y, c("", ".se"))
+  grid <- cbind(grid, pred_df)
 
-  structure(list(grid = grid, model = model), class = "linval")
+  structure(list(
+    formula = formula, grid = grid, model = model, xs = xs, y = y),
+    class = "linval")
 }
 
 #' Plots a previously created linval object
 #'
-#' @param x x is this is the name of the previously created linval object.
-#' @param geom geom is the name of the qplot plot type that should be used
-#' from the ggplot2 package.
-#' @param hierarchy hierarchy sets the facetting configuration for plotting.
-#' Only the x variables in the model will be used in the hierarchy and the
-#' first x variable in the x portion of the hierarchy will be used on the
-#' horizontal axis for plotting.
-#' @param frame frame is the name of the frame saved in the linval object
-#' that you would like plotted.  The default is the plotgrid which is the
-#' primary purpose of the package but the dataframe and the factor grid
-#' can also be plotted for diagnostic purposes.
-#' @author Christopher Kielion \email{ckielion@@gmail.com}
+#' @param x is this is the name of the previously created linval object.
+#' @param geom geom to use. Guess automatically based on whether the predictor
+#'   is on the y-axis (the default), or elsewhere.
+#' @param hierarchy override the ordering of variables from the model.
+#'   Combined with the original formula using \code{\link{update.formula}}
+#'   so you use can \code{.} as a place holder.
 #' @export
 #' @examples
+#' d_quantiles <- linval(price ~ carat + color + clarity, data = diamonds,
+#'   reduction = "qgrid", bins = 4)
 #'
-#' plot.linval(x = breaks_by_user_specs, geom = 'point',
-#'   hierarchy = carat ~ color + clarity)
-plot.linval <- function(x, geom=NULL, hierarchy = NULL, frame = 'plotgrid') {
-  formula <- x$formula
-  data <- x$datagrid
+#' autoplot(d_quantiles)
+#'
+#' # Use the second argument to rearrange the order of variables
+#' autoplot(d_quantiles, . ~ color + clarity + carat)
+#' autoplot(d_quantiles, color ~ clarity + price + .)
+autoplot.linval <- function(x, hierarchy = . ~ ., geom = NULL) {
+  formula <- update(x$formula, hierarchy)
 
-  xs <- all.vars(terms(formula)[[3]])
-  ys <- all.vars(terms(formula)[[2]])
-  if (sum(xs %in% all.vars(hierarchy)) < length(xs))
-    stop('Model and Hierarchy Disagree')
+  y <- all.vars(formula[[2]])
+  xs <- all.vars(formula[[3]])
 
-  ## Checks for missings in the data only within the variables present in the model. Returns
-  ## TRUE if there are missings and FALSE if not.
-  if(max(is.na(data[xs]))>0) missings <- TRUE else missings <- FALSE
-
-  ## Within the hierarchy, the first X variable is used on the major horizontal axis, therefore, it
-  ## must be removed so that it is not reused in the faceting of plots.
-  hierarchyx <- all.vars(terms(hierarchy)[[3]])[1]
-  if (length(all.vars(terms(hierarchy)[[3]])) == 1) {
-    remxterms <- "."
+  if (length(xs) == 1) {
+    # Use first x variable for x-axis
+    aes <- aes_string(x = xs[[1]], y = y)
+    facet <- facet_null()
   } else {
-    remxterms <- all.vars(terms(hierarchy)[[3]])[-1]
-  }
-  remhierarchy <- as.formula(
-    paste(
-      paste(all.vars(terms(hierarchy)[[2]]),collapse = '+'),
-      " ~ ",
-      paste(remxterms,  collapse= "+")
-    )
-  )
+    # Second for grouping
+    aes <- aes_string(x = xs[[1]], y = y, group = xs[[2]], colour = xs[[2]])
 
-  ggplot(x[[frame]], aes_string(x = hierarchyx, y = "fit")) +
+    # Remaining variables used for facetting
+    if (length(xs) == 2) {
+      facet <- facet_null()
+    } else if (length(xs == 3)) {
+      facet <- facet_wrap(xs[[3]])
+    } else {
+      left <- xs[-(1:2)]
+      pieces <- split(left, seq_along(left) < length(left) / 2)
+
+      formula <- paste0(
+        paste0(pieces[[1]], collapse = " + "),
+        " ~ ",
+        paste0(pieces[[2]], collapse = " + ")
+      )
+      facet <- facet_grid(formula)
+    }
+  }
+
+  # Figure out geom
+  if (is.null(geom)) {
+    x_num <- is.numeric(x$grid[[xs[1]]])
+    y_num <- is.numeric(x$grid[[y]])
+
+    # Predictor is on y-axis
+    if (identical(y, x$y)) {
+      if (x_num) {
+        geom <- "line"
+      } else {
+        geom <- "point"
+      }
+    } else {
+      geom <- "tile"
+      aes$fill <- aes$colour
+    }
+  }
+
+  ggplot(x$grid, aes) +
     layer(geom = geom) +
-    facet_grid(remhierarchy) +
-    xlab(hierarchyx) + ylab(ys)
+    facet
 }

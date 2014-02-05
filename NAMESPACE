@@ -1,5 +1,5 @@
 S3method(as.data.frame,grid)
-S3method(plot,linval)
+S3method(autoplot,linval)
 S3method(print,grid)
 export(linval)
 export(reduce_egrid)

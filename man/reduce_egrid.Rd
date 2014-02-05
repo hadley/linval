@@ -26,7 +26,8 @@ reduce_extremes(data, breaks = list(), n_max = 1e+05)
 \code{reduce_egrid} makes a grid with equal width bins,
 \code{reduce_qgrid} makes a grid with bins containing equal
 numbers of points, \code{reduce_extremes} captures just the
-minimum and maximum of each variable.
+minimum and maximum of each variable. Categorical variables
+are always preserved.
 }
 \examples{
 reduce_egrid(diamonds[1:3], bins = 4)
